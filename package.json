@@ -41,7 +41,7 @@
       {
         "command": "chainvet.analyzePath",
         "title": "ChainVet: Analyze Selected File/Folder…",
-        "icon": "$(play)"
+        "icon": "$(folder-opened)"
       },
       {
         "command": "chainvet.cancel",
@@ -126,9 +126,24 @@
           "group": "navigation@2"
         },
         {
-          "command": "chainvet.refreshFindings",
+          "command": "chainvet.analyzePath",
           "when": "view == chainvetFindings || view == chainvetSummary",
           "group": "navigation@3"
+        },
+        {
+          "command": "chainvet.generatePdfReport",
+          "when": "view == chainvetFindings || view == chainvetSummary",
+          "group": "navigation@4"
+        },
+        {
+          "command": "chainvet.generateMarkdownReport",
+          "when": "view == chainvetFindings || view == chainvetSummary",
+          "group": "navigation@5"
+        },
+        {
+          "command": "chainvet.refreshFindings",
+          "when": "view == chainvetFindings || view == chainvetSummary",
+          "group": "navigation@6"
         },
         {
           "command": "chainvet.clearFindings",
@@ -144,16 +159,6 @@
           "command": "chainvet.openSettings",
           "when": "view == chainvetFindings || view == chainvetSummary",
           "group": "overflow@3"
-        },
-        {
-          "command": "chainvet.generatePdfReport",
-          "when": "view == chainvetFindings || view == chainvetSummary",
-          "group": "overflow@4"
-        },
-        {
-          "command": "chainvet.generateMarkdownReport",
-          "when": "view == chainvetFindings || view == chainvetSummary",
-          "group": "overflow@5"
         }
       ],
       "explorer/context": [
