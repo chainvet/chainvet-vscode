@@ -1,85 +1,60 @@
 # ChainVet — VS Code extension
 
-Run the ChainVet smart-contract security analyzer directly inside VS Code. Findings appear as native diagnostics (squiggles + Problems panel) and in a dedicated Findings tree in the activity bar.
-
-## What you get
-
-- **Native diagnostics** — every finding shows as an inline squiggle in the Solidity source and in the Problems panel. Severities map to: High/Critical → Error, Medium/Low → Warning, Info → Information.
-- **Findings sidebar** — a "ChainVet" activity-bar entry with the findings grouped by severity. Click a finding to jump to the exact range in the source.
-- **Status sidebar** — current analyzer state and quick actions (analyze · cancel · clear).
-- **Status bar item** — shows analyzer state at a glance, click to analyze or cancel.
-- **Commands** — accessible from the Command Palette (`Ctrl/Cmd+Shift+P` → "ChainVet: …").
-- **Context menus** — right-click a `.sol` file or folder in the Explorer to analyze it.
-- **Run on save** (opt-in) — re-analyze a file every time you save.
+Live Solidity security analysis in VS Code, powered by the
+[ChainVet](https://github.com/chainvet/chainvet) language server (`chainvet-lsp`).
+Findings appear as native diagnostics — inline squiggles and the Problems panel —
+as you open, edit, and save `.sol` files.
 
 ## Prerequisites
 
-1. Build the ChainVet analyzer (the Rust binary) from the repo root:
+Install the ChainVet language server so `chainvet-lsp` is on your `PATH`:
 
-   ```bash
-   cargo build --release   # produces target/release/ChainVet
-   ```
+```bash
+cargo install --git https://github.com/chainvet/chainvet chainvet-lsp
+# or, from a workspace checkout: cargo build --release -p chainvet-lsp
+```
 
-   The extension auto-discovers the binary at `<workspace>/target/release/ChainVet`, then `target/debug/ChainVet`, then `chainvet` / `ChainVet` on `PATH`. It also accepts the older `Static` binary name during migration. To override, set `chainvet.binaryPath` in your settings.
-
-2. Node.js 18+ and `npm`.
+(Requires the Z3 system library.) If the binary isn't on `PATH`, set
+`chainvet.serverPath` to its absolute path.
 
 ## Install / run from source
 
 ```bash
-cd vscode-extension
 npm install
-npm run compile          # builds out/extension.js
+npm run compile        # builds out/extension.js
 ```
 
-Then, from VS Code:
-
-- Open the `vscode-extension` folder
-- Press <kbd>F5</kbd> → a new "Extension Development Host" window opens with ChainVet loaded
-- Open a Solidity workspace inside it and run **ChainVet: Analyze Current File**
-
-To package a `.vsix` for distribution:
+Press <kbd>F5</kbd> in VS Code to launch an Extension Development Host, or package
+a VSIX:
 
 ```bash
 npx @vscode/vsce package
+code --install-extension chainvet-0.1.0.vsix
 ```
 
-Then `code --install-extension chainvet-0.1.0.vsix` (or use the VS Code UI: Extensions → "Install from VSIX…").
+## How it works
 
-## Commands
-
-| Command | What it does |
-| --- | --- |
-| `ChainVet: Analyze Current File` | Run the analyzer on the file in the active editor |
-| `ChainVet: Analyze Workspace` | Run on the first workspace folder (every reachable `.sol`) |
-| `ChainVet: Analyze Selected File/Folder…` | Pick a target via dialog or explorer context |
-| `ChainVet: Cancel Running Analysis` | Stop the in-flight analyzer process |
-| `ChainVet: Clear Findings` | Remove diagnostics and reset the Findings view |
-| `ChainVet: Refresh Findings View` | Re-render the sidebar tree |
-| `ChainVet: Open Settings` | Jump to extension settings |
+The extension is a thin language client: it launches `chainvet-lsp` over stdio and
+lets it publish diagnostics for Solidity documents. Severities map High → Error,
+Medium → Warning, Low/Info → Information. Settings are passed to the server as
+environment variables, so AI features are opt-in per-workspace.
 
 ## Settings
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `chainvet.binaryPath` | `""` (auto-discover) | Absolute path to the analyzer binary |
-| `chainvet.mode` | `"hybrid"` | One of `hybrid`, `static`, `symbolic`, `fuzzing` |
-| `chainvet.runOnSave` | `false` | Re-analyze on file save |
-| `chainvet.showInformationFindings` | `true` | Surface info-level findings as VS Code Information diagnostics |
-| `chainvet.analysisTimeoutSeconds` | `600` | Maximum run time before the analyzer is aborted |
+| `chainvet.serverPath` | `chainvet-lsp` | Path to the language-server binary |
+| `chainvet.aiReports.enabled` | `false` | LLM review of findings (local Ollama; adds latency) |
+| `chainvet.aiFallbackParser.enabled` | `false` | AI fallback parser when solc + tree-sitter both fail |
+| `chainvet.ai.endpoint` | `http://127.0.0.1:11434` | Ollama endpoint for the AI features |
+| `chainvet.ai.model` | `qwen2.5-coder:7b` | Ollama model for the AI features |
 
-## How it works
+## Commands
 
-The extension spawns the analyzer binary with `--<mode> <path> --json` and parses the JSON it writes to stdout. Findings are mapped to `vscode.Diagnostic`s using their byte offsets; if a finding has no usable span, the diagnostic falls at the top of the file. Warnings (from stderr) are surfaced in the dedicated "ChainVet" output channel.
-
-The Findings tree groups results by severity (`high → medium → low → info → unknown`). Clicking a node opens the file and selects the offending range.
-
-## Troubleshooting
-
-- **"ChainVet analyzer binary not found"** — build the Rust crate, or set `chainvet.binaryPath` to an absolute path.
-- **Findings show on line 1** — the analyzer didn't emit start/end offsets for that finding. The diagnostic still has the kind, severity, and message; check the Findings tree for context.
-- **Open the "ChainVet" output channel** (`View → Output → ChainVet`) to see the exact command line, stderr, and parsed warnings.
+| Command | What it does |
+| --- | --- |
+| `ChainVet: Restart Language Server` | Restart `chainvet-lsp` (e.g. after changing settings) |
 
 ## License
 
-See the parent repository.
+MIT — see the [ChainVet LICENSE](https://github.com/chainvet/chainvet/blob/main/LICENSE).
