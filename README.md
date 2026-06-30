@@ -1,13 +1,13 @@
-# ChainVet — VS Code extension
+# Chainvet — VS Code extension
 
 Live Solidity security analysis in VS Code, powered by the
-[ChainVet](https://github.com/chainvet/chainvet) language server (`chainvet-lsp`).
+[Chainvet](https://github.com/chainvet/chainvet) language server (`chainvet-lsp`).
 Findings appear as native diagnostics — inline squiggles and the Problems panel —
 as you open, edit, and save `.sol` files.
 
 ## Prerequisites
 
-Install the ChainVet language server so `chainvet-lsp` is on your `PATH`:
+Install the Chainvet language server so `chainvet-lsp` is on your `PATH`:
 
 ```bash
 cargo install --git https://github.com/chainvet/chainvet chainvet-lsp
@@ -53,8 +53,8 @@ environment variables, so AI features are opt-in per-workspace.
 
 | Command | What it does |
 | --- | --- |
-| `ChainVet: Restart Language Server` | Restart `chainvet-lsp` (e.g. after changing settings) |
+| `Chainvet: Restart Language Server` | Restart `chainvet-lsp` (e.g. after changing settings) |
 
 ## License
 
-MIT — see the [ChainVet LICENSE](https://github.com/chainvet/chainvet/blob/main/LICENSE).
+MIT — see the [Chainvet LICENSE](https://github.com/chainvet/chainvet/blob/main/LICENSE).

@@ -8,7 +8,7 @@ import {
 
 let client: LanguageClient | undefined;
 
-/** Map ChainVet settings to the environment the language server reads. */
+/** Map Chainvet settings to the environment the language server reads. */
 function buildEnv(): NodeJS.ProcessEnv {
   const config = vscode.workspace.getConfiguration("chainvet");
   const env: NodeJS.ProcessEnv = { ...process.env };
@@ -43,7 +43,7 @@ function makeClient(): LanguageClient {
   const clientOptions: LanguageClientOptions = {
     documentSelector: [{ scheme: "file", language: "solidity" }],
   };
-  return new LanguageClient("chainvet", "ChainVet", serverOptions, clientOptions);
+  return new LanguageClient("chainvet", "Chainvet", serverOptions, clientOptions);
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
@@ -58,7 +58,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       await client.stop();
       client = makeClient();
       await client.start();
-      vscode.window.showInformationMessage("ChainVet language server restarted.");
+      vscode.window.showInformationMessage("Chainvet language server restarted.");
     }),
   );
 }

@@ -1,7 +1,7 @@
 {
   "name": "chainvet",
-  "displayName": "ChainVet — Smart Contract Auditor",
-  "description": "Analyze Solidity smart contracts for security vulnerabilities inside VS Code, via the ChainVet language server.",
+  "displayName": "Chainvet — Smart Contract Auditor",
+  "description": "Analyze Solidity smart contracts for security vulnerabilities inside VS Code, via the Chainvet language server.",
   "version": "0.1.0",
   "publisher": "chainvet",
   "license": "MIT",
@@ -14,7 +14,7 @@
   "activationEvents": ["onLanguage:solidity", "workspaceContains:**/*.sol"],
   "contributes": {
     "configuration": {
-      "title": "ChainVet",
+      "title": "Chainvet",
       "properties": {
         "chainvet.serverPath": {
           "type": "string",
@@ -46,7 +46,7 @@
     "commands": [
       {
         "command": "chainvet.restartServer",
-        "title": "ChainVet: Restart Language Server"
+        "title": "Chainvet: Restart Language Server"
       }
     ]
   },
