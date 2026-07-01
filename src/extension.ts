@@ -276,7 +276,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       await client.start();
       vscode.window.showInformationMessage("Chainvet language server restarted.");
     }),
-    vscode.commands.registerCommand("chainvet.hybridScan", () => runHybridScan()),
+    vscode.commands.registerCommand("chainvet.runHybridScan", () => runHybridScan()),
     vscode.commands.registerCommand("chainvet.filterTier", () => chooseTierFilter(treeView)),
     vscode.commands.registerCommand("chainvet.clearFindings", () => findingsProvider.clear()),
     vscode.commands.registerCommand("chainvet.openFinding", (node: FindingLeaf) => openFinding(node)),

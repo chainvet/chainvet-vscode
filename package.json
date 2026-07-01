@@ -2,7 +2,7 @@
   "name": "chainvet",
   "displayName": "Chainvet \u2014 Smart Contract Auditor",
   "description": "Analyze Solidity smart contracts for security vulnerabilities inside VS Code, via the Chainvet language server.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "chainvet",
   "license": "MIT",
   "icon": "media/chainvet-icon.png",
@@ -81,7 +81,7 @@
         "title": "Chainvet: Restart Language Server"
       },
       {
-        "command": "chainvet.hybridScan",
+        "command": "chainvet.runHybridScan",
         "title": "Full Hybrid Scan (Current File)",
         "category": "Chainvet",
         "icon": "$(play)"
@@ -119,7 +119,7 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "chainvet.hybridScan",
+          "command": "chainvet.runHybridScan",
           "when": "resourceLangId == solidity"
         },
         {
@@ -128,14 +128,14 @@
       ],
       "editor/title": [
         {
-          "command": "chainvet.hybridScan",
+          "command": "chainvet.runHybridScan",
           "when": "resourceLangId == solidity",
           "group": "navigation"
         }
       ],
       "view/title": [
         {
-          "command": "chainvet.hybridScan",
+          "command": "chainvet.runHybridScan",
           "when": "view == chainvetFindings",
           "group": "navigation@1"
         },
