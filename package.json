@@ -1,17 +1,37 @@
 {
   "name": "chainvet",
-  "displayName": "Chainvet — Smart Contract Auditor",
+  "displayName": "Chainvet \u2014 Smart Contract Auditor",
   "description": "Analyze Solidity smart contracts for security vulnerabilities inside VS Code, via the Chainvet language server.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "chainvet",
   "license": "MIT",
   "icon": "media/chainvet-icon.png",
-  "categories": ["Linters", "Programming Languages", "Other"],
-  "keywords": ["solidity", "smart contract", "security", "audit", "static analysis", "ethereum"],
-  "engines": { "vscode": "^1.85.0" },
-  "repository": { "type": "git", "url": "https://github.com/chainvet/chainvet-vscode" },
+  "categories": [
+    "Linters",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "solidity",
+    "smart contract",
+    "security",
+    "audit",
+    "static analysis",
+    "ethereum"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chainvet/chainvet-vscode"
+  },
   "main": "./out/extension.js",
-  "activationEvents": ["onLanguage:solidity", "workspaceContains:**/*.sol", "onView:chainvetFindings"],
+  "activationEvents": [
+    "onLanguage:solidity",
+    "workspaceContains:**/*.sol",
+    "onView:chainvetFindings"
+  ],
   "contributes": {
     "configuration": {
       "title": "Chainvet",
@@ -46,8 +66,13 @@
     "languages": [
       {
         "id": "solidity",
-        "aliases": ["Solidity", "solidity"],
-        "extensions": [".sol"]
+        "aliases": [
+          "Solidity",
+          "solidity"
+        ],
+        "extensions": [
+          ".sol"
+        ]
       }
     ],
     "commands": [
@@ -93,16 +118,37 @@
     },
     "menus": {
       "commandPalette": [
-        { "command": "chainvet.hybridScan", "when": "resourceLangId == solidity" },
-        { "command": "chainvet.filterTier" }
+        {
+          "command": "chainvet.hybridScan",
+          "when": "resourceLangId == solidity"
+        },
+        {
+          "command": "chainvet.filterTier"
+        }
       ],
       "editor/title": [
-        { "command": "chainvet.hybridScan", "when": "resourceLangId == solidity", "group": "navigation" }
+        {
+          "command": "chainvet.hybridScan",
+          "when": "resourceLangId == solidity",
+          "group": "navigation"
+        }
       ],
       "view/title": [
-        { "command": "chainvet.hybridScan", "when": "view == chainvetFindings", "group": "navigation@1" },
-        { "command": "chainvet.filterTier", "when": "view == chainvetFindings", "group": "navigation@2" },
-        { "command": "chainvet.clearFindings", "when": "view == chainvetFindings", "group": "navigation@3" }
+        {
+          "command": "chainvet.hybridScan",
+          "when": "view == chainvetFindings",
+          "group": "navigation@1"
+        },
+        {
+          "command": "chainvet.filterTier",
+          "when": "view == chainvetFindings",
+          "group": "navigation@2"
+        },
+        {
+          "command": "chainvet.clearFindings",
+          "when": "view == chainvetFindings",
+          "group": "navigation@3"
+        }
       ]
     }
   },
