@@ -21,11 +21,6 @@
           "default": "chainvet-lsp",
           "description": "Path to the chainvet-lsp language server binary (on PATH by default)."
         },
-        "chainvet.cliPath": {
-          "type": "string",
-          "default": "chainvet",
-          "description": "Path to the chainvet CLI binary, used for on-demand full hybrid scans (on PATH by default)."
-        },
         "chainvet.aiReports.enabled": {
           "type": "boolean",
           "default": false,
@@ -67,10 +62,10 @@
         "icon": "$(play)"
       },
       {
-        "command": "chainvet.refreshFindings",
-        "title": "Refresh Findings",
+        "command": "chainvet.filterTier",
+        "title": "Filter by Tier",
         "category": "Chainvet",
-        "icon": "$(refresh)"
+        "icon": "$(filter)"
       },
       {
         "command": "chainvet.clearFindings",
@@ -98,14 +93,16 @@
     },
     "menus": {
       "commandPalette": [
-        { "command": "chainvet.hybridScan", "when": "resourceLangId == solidity" }
+        { "command": "chainvet.hybridScan", "when": "resourceLangId == solidity" },
+        { "command": "chainvet.filterTier" }
       ],
       "editor/title": [
         { "command": "chainvet.hybridScan", "when": "resourceLangId == solidity", "group": "navigation" }
       ],
       "view/title": [
-        { "command": "chainvet.refreshFindings", "when": "view == chainvetFindings", "group": "navigation@1" },
-        { "command": "chainvet.clearFindings", "when": "view == chainvetFindings", "group": "navigation@2" }
+        { "command": "chainvet.hybridScan", "when": "view == chainvetFindings", "group": "navigation@1" },
+        { "command": "chainvet.filterTier", "when": "view == chainvetFindings", "group": "navigation@2" },
+        { "command": "chainvet.clearFindings", "when": "view == chainvetFindings", "group": "navigation@3" }
       ]
     }
   },

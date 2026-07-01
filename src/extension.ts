@@ -1,31 +1,41 @@
 import * as vscode from "vscode";
-import { execFile, ChildProcess } from "child_process";
-import * as fs from "fs";
 import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
   TransportKind,
+  ExecuteCommandRequest,
 } from "vscode-languageclient/node";
 
 let client: LanguageClient | undefined;
-let hybridDiagnostics: vscode.DiagnosticCollection;
 let findingsProvider: FindingsProvider;
 
-/** A finding row from `chainvet scan -f json` (only the fields we render). */
-interface Finding {
+interface LspPosition {
+  line: number;
+  character: number;
+}
+interface LspRange {
+  start: LspPosition;
+  end: LspPosition;
+}
+/** A finding row from the server's `chainvet/publishFindings` notification. */
+interface FindingItem {
   tier: string;
   provenance: string;
   kind: string;
   severity: string;
   category: string;
   message: string;
-  file: string;
-  start: number;
-  end: number;
+  range: LspRange;
+}
+interface PublishFindingsParams {
+  uri: string;
+  findings: FindingItem[];
 }
 
-// ─── Language server (live static diagnostics) ──────────────────────────────
+type TierFilter = "all" | "confirmed" | "candidate";
+
+// ─── Language server ────────────────────────────────────────────────────────
 
 /** Map Chainvet settings to the environment the language server reads. */
 function buildEnv(): NodeJS.ProcessEnv {
@@ -65,36 +75,7 @@ function makeClient(): LanguageClient {
   return new LanguageClient("chainvet", "Chainvet", serverOptions, clientOptions);
 }
 
-// ─── Byte-offset → Position (start/end are UTF-8 byte offsets) ──────────────
-
-function bytePosition(buf: Buffer, offset: number): vscode.Position {
-  const clamped = Math.max(0, Math.min(offset, buf.length));
-  const prefix = buf.subarray(0, clamped).toString("utf8");
-  let line = 0;
-  let lastNewline = -1;
-  for (let i = 0; i < prefix.length; i++) {
-    if (prefix.charCodeAt(i) === 10) {
-      line++;
-      lastNewline = i;
-    }
-  }
-  return new vscode.Position(line, prefix.length - lastNewline - 1);
-}
-
-function byteRange(buf: Buffer, start: number, end: number): vscode.Range {
-  return new vscode.Range(bytePosition(buf, start), bytePosition(buf, end));
-}
-
-function diagnosticSeverity(severity: string): vscode.DiagnosticSeverity {
-  switch (severity) {
-    case "high":
-      return vscode.DiagnosticSeverity.Error;
-    case "medium":
-      return vscode.DiagnosticSeverity.Warning;
-    default:
-      return vscode.DiagnosticSeverity.Information;
-  }
-}
+// ─── Presentation helpers ───────────────────────────────────────────────────
 
 function severityColor(severity: string): vscode.ThemeColor {
   switch (severity) {
@@ -107,9 +88,8 @@ function severityColor(severity: string): vscode.ThemeColor {
   }
 }
 
-function basename(p: string): string {
-  const slash = Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\"));
-  return slash >= 0 ? p.slice(slash + 1) : p;
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 // ─── Findings tree view ─────────────────────────────────────────────────────
@@ -117,62 +97,88 @@ function basename(p: string): string {
 class SeverityGroup {
   constructor(
     public readonly severity: string,
-    public readonly findings: Finding[],
+    public readonly items: { uri: string; finding: FindingItem }[],
   ) {}
 }
 
-type TreeNode = SeverityGroup | Finding;
-
-function isGroup(node: TreeNode): node is SeverityGroup {
-  return (node as SeverityGroup).findings !== undefined;
+class FindingLeaf {
+  constructor(
+    public readonly uri: string,
+    public readonly finding: FindingItem,
+  ) {}
 }
+
+type TreeNode = SeverityGroup | FindingLeaf;
 
 class FindingsProvider implements vscode.TreeDataProvider<TreeNode> {
   private readonly emitter = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this.emitter.event;
-  private findings: Finding[] = [];
+  private readonly byUri = new Map<string, FindingItem[]>();
+  private filter: TierFilter = "all";
 
-  setFindings(findings: Finding[]): void {
-    this.findings = findings;
+  setForUri(uri: string, findings: FindingItem[]): void {
+    if (findings.length > 0) {
+      this.byUri.set(uri, findings);
+    } else {
+      this.byUri.delete(uri);
+    }
     this.emitter.fire();
   }
 
   clear(): void {
-    this.findings = [];
+    this.byUri.clear();
     this.emitter.fire();
+  }
+
+  setFilter(filter: TierFilter): void {
+    this.filter = filter;
+    this.emitter.fire();
+  }
+
+  private collect(): { uri: string; finding: FindingItem }[] {
+    const out: { uri: string; finding: FindingItem }[] = [];
+    for (const [uri, findings] of this.byUri) {
+      for (const finding of findings) {
+        if (this.filter === "all" || finding.tier === this.filter) {
+          out.push({ uri, finding });
+        }
+      }
+    }
+    return out;
   }
 
   getChildren(node?: TreeNode): TreeNode[] {
     if (!node) {
+      const items = this.collect();
       return ["high", "medium", "low"]
-        .map((sev) => new SeverityGroup(sev, this.findings.filter((f) => f.severity === sev)))
-        .filter((group) => group.findings.length > 0);
+        .map((sev) => new SeverityGroup(sev, items.filter((i) => i.finding.severity === sev)))
+        .filter((group) => group.items.length > 0);
     }
-    if (isGroup(node)) {
-      return node.findings;
+    if (node instanceof SeverityGroup) {
+      return node.items.map((i) => new FindingLeaf(i.uri, i.finding));
     }
     return [];
   }
 
   getTreeItem(node: TreeNode): vscode.TreeItem {
-    if (isGroup(node)) {
-      const label = node.severity.charAt(0).toUpperCase() + node.severity.slice(1);
+    if (node instanceof SeverityGroup) {
       const item = new vscode.TreeItem(
-        `${label} (${node.findings.length})`,
+        `${capitalize(node.severity)} (${node.items.length})`,
         vscode.TreeItemCollapsibleState.Expanded,
       );
       item.iconPath = new vscode.ThemeIcon("circle-large-filled", severityColor(node.severity));
       return item;
     }
-    const item = new vscode.TreeItem(node.kind, vscode.TreeItemCollapsibleState.None);
-    item.description = `${node.tier} · ${node.message}`;
+    const f = node.finding;
+    const item = new vscode.TreeItem(f.kind, vscode.TreeItemCollapsibleState.None);
+    item.description = `${f.tier} · ${f.message}`;
     item.tooltip = new vscode.MarkdownString(
-      `**${node.severity.toUpperCase()}** · ${node.tier} _(${node.provenance})_\n\n` +
-        `${node.category} — \`${node.kind}\`\n\n${node.message}`,
+      `**${f.severity.toUpperCase()}** · ${f.tier} _(${f.provenance})_\n\n` +
+        `${f.category} — \`${f.kind}\`\n\n${f.message}`,
     );
     item.iconPath = new vscode.ThemeIcon(
-      node.tier === "confirmed" ? "pass-filled" : "circle-outline",
-      severityColor(node.severity),
+      f.tier === "confirmed" ? "pass-filled" : "circle-outline",
+      severityColor(f.severity),
     );
     item.command = {
       command: "chainvet.openFinding",
@@ -183,51 +189,16 @@ class FindingsProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 }
 
-async function openFinding(finding: Finding): Promise<void> {
-  const uri = vscode.Uri.file(finding.file);
-  const doc = await vscode.workspace.openTextDocument(uri);
+async function openFinding(node: FindingLeaf): Promise<void> {
+  const doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(node.uri));
   const editor = await vscode.window.showTextDocument(doc);
-  const range = byteRange(Buffer.from(doc.getText(), "utf8"), finding.start, finding.end);
+  const r = node.finding.range;
+  const range = new vscode.Range(r.start.line, r.start.character, r.end.line, r.end.character);
   editor.selection = new vscode.Selection(range.start, range.end);
   editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
 }
 
-// ─── On-demand hybrid scan (via the chainvet CLI) ───────────────────────────
-
-function runCli(
-  cli: string,
-  file: string,
-  token: vscode.CancellationToken,
-): Promise<Finding[] | undefined> {
-  return new Promise((resolve) => {
-    const child: ChildProcess = execFile(
-      cli,
-      ["scan", "-m", "hybrid", "-f", "json", file],
-      { maxBuffer: 64 * 1024 * 1024 },
-      (error, stdout, stderr) => {
-        if (token.isCancellationRequested) {
-          resolve(undefined);
-          return;
-        }
-        const out = (stdout || "").trim();
-        if (!out.startsWith("{")) {
-          const detail = stderr || (error && error.message) || "no output";
-          vscode.window.showErrorMessage(`Chainvet scan failed: ${detail}`);
-          resolve(undefined);
-          return;
-        }
-        try {
-          const report = JSON.parse(out) as { findings?: Finding[] };
-          resolve(report.findings ?? []);
-        } catch (e) {
-          vscode.window.showErrorMessage(`Chainvet: could not parse scan output: ${String(e)}`);
-          resolve(undefined);
-        }
-      },
-    );
-    token.onCancellationRequested(() => child.kill());
-  });
-}
+// ─── Commands ───────────────────────────────────────────────────────────────
 
 async function runHybridScan(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
@@ -235,42 +206,49 @@ async function runHybridScan(): Promise<void> {
     vscode.window.showWarningMessage("Chainvet: open a Solidity (.sol) file to run a hybrid scan.");
     return;
   }
+  if (!client) {
+    return;
+  }
   if (editor.document.isDirty) {
     await editor.document.save();
   }
-  const file = editor.document.fileName;
-  const cli = vscode.workspace.getConfiguration("chainvet").get<string>("cliPath", "chainvet");
-
-  const findings = await vscode.window.withProgress<Finding[] | undefined>(
+  const uri = editor.document.uri.toString();
+  await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: `Chainvet: hybrid scan of ${basename(file)}…`,
+      title: "Chainvet: full hybrid scan…",
       cancellable: true,
     },
-    (_progress, token) => runCli(cli, file, token),
+    async (_progress, token) => {
+      try {
+        await client!.sendRequest(
+          ExecuteCommandRequest.type,
+          { command: "chainvet.hybridScan", arguments: [uri] },
+          token,
+        );
+      } catch (e) {
+        if (!token.isCancellationRequested) {
+          vscode.window.showErrorMessage(`Chainvet hybrid scan failed: ${String(e)}`);
+        }
+      }
+    },
   );
-  if (!findings) {
+}
+
+async function chooseTierFilter(treeView: vscode.TreeView<TreeNode>): Promise<void> {
+  const picks: { label: string; value: TierFilter }[] = [
+    { label: "$(list-flat) All findings", value: "all" },
+    { label: "$(pass-filled) Confirmed only", value: "confirmed" },
+    { label: "$(circle-outline) Candidate only", value: "candidate" },
+  ];
+  const pick = await vscode.window.showQuickPick(picks, {
+    placeHolder: "Filter Chainvet findings by tier",
+  });
+  if (!pick) {
     return;
   }
-
-  const buf = fs.readFileSync(file);
-  const diagnostics = findings.map((f) => {
-    const diag = new vscode.Diagnostic(
-      byteRange(buf, f.start, f.end),
-      `[${f.tier}] ${f.message} (${f.kind})`,
-      diagnosticSeverity(f.severity),
-    );
-    diag.source = "chainvet (hybrid)";
-    diag.code = f.category;
-    return diag;
-  });
-  hybridDiagnostics.set(vscode.Uri.file(file), diagnostics);
-  findingsProvider.setFindings(findings);
-
-  const confirmed = findings.filter((f) => f.tier === "confirmed").length;
-  vscode.window.showInformationMessage(
-    `Chainvet: ${findings.length} finding(s), ${confirmed} confirmed.`,
-  );
+  findingsProvider.setFilter(pick.value);
+  treeView.description = pick.value === "all" ? undefined : `${capitalize(pick.value)} only`;
 }
 
 // ─── Activation ─────────────────────────────────────────────────────────────
@@ -279,15 +257,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   client = makeClient();
   await client.start();
 
-  hybridDiagnostics = vscode.languages.createDiagnosticCollection("chainvet-hybrid");
   findingsProvider = new FindingsProvider();
   const treeView = vscode.window.createTreeView("chainvetFindings", {
     treeDataProvider: findingsProvider,
   });
 
   context.subscriptions.push(
-    hybridDiagnostics,
     treeView,
+    client.onNotification("chainvet/publishFindings", (params: PublishFindingsParams) => {
+      findingsProvider.setForUri(params.uri, params.findings);
+    }),
     vscode.commands.registerCommand("chainvet.restartServer", async () => {
       if (!client) {
         return;
@@ -298,14 +277,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       vscode.window.showInformationMessage("Chainvet language server restarted.");
     }),
     vscode.commands.registerCommand("chainvet.hybridScan", () => runHybridScan()),
-    vscode.commands.registerCommand("chainvet.refreshFindings", () => runHybridScan()),
-    vscode.commands.registerCommand("chainvet.clearFindings", () => {
-      hybridDiagnostics.clear();
-      findingsProvider.clear();
-    }),
-    vscode.commands.registerCommand("chainvet.openFinding", (finding: Finding) =>
-      openFinding(finding),
-    ),
+    vscode.commands.registerCommand("chainvet.filterTier", () => chooseTierFilter(treeView)),
+    vscode.commands.registerCommand("chainvet.clearFindings", () => findingsProvider.clear()),
+    vscode.commands.registerCommand("chainvet.openFinding", (node: FindingLeaf) => openFinding(node)),
   );
 }
 
