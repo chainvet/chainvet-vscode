@@ -2,7 +2,7 @@
   "name": "chainvet",
   "displayName": "Chainvet \u2014 Smart Contract Auditor",
   "description": "Analyze Solidity smart contracts for security vulnerabilities inside VS Code, via the Chainvet language server.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "chainvet",
   "license": "MIT",
   "icon": "media/chainvet-icon.png",
