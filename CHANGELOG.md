@@ -2,7 +2,7 @@
 
 All notable changes to the Chainvet VS Code extension are documented here.
 
-## 0.1.4 — Initial release
+## 0.1.0 — Initial release
 
 - Live static diagnostics for `.sol` files, powered by the `chainvet-lsp` language server.
 - **Full Hybrid Scan** command — on-demand symbolic execution + fuzzing, surfacing Confirmed-tier findings.
