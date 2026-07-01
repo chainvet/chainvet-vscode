@@ -11,7 +11,7 @@
   "engines": { "vscode": "^1.85.0" },
   "repository": { "type": "git", "url": "https://github.com/chainvet/chainvet-vscode" },
   "main": "./out/extension.js",
-  "activationEvents": ["onLanguage:solidity", "workspaceContains:**/*.sol"],
+  "activationEvents": ["onLanguage:solidity", "workspaceContains:**/*.sol", "onView:chainvetFindings"],
   "contributes": {
     "configuration": {
       "title": "Chainvet",
@@ -20,6 +20,11 @@
           "type": "string",
           "default": "chainvet-lsp",
           "description": "Path to the chainvet-lsp language server binary (on PATH by default)."
+        },
+        "chainvet.cliPath": {
+          "type": "string",
+          "default": "chainvet",
+          "description": "Path to the chainvet CLI binary, used for on-demand full hybrid scans (on PATH by default)."
         },
         "chainvet.aiReports.enabled": {
           "type": "boolean",
@@ -43,12 +48,66 @@
         }
       }
     },
+    "languages": [
+      {
+        "id": "solidity",
+        "aliases": ["Solidity", "solidity"],
+        "extensions": [".sol"]
+      }
+    ],
     "commands": [
       {
         "command": "chainvet.restartServer",
         "title": "Chainvet: Restart Language Server"
+      },
+      {
+        "command": "chainvet.hybridScan",
+        "title": "Full Hybrid Scan (Current File)",
+        "category": "Chainvet",
+        "icon": "$(play)"
+      },
+      {
+        "command": "chainvet.refreshFindings",
+        "title": "Refresh Findings",
+        "category": "Chainvet",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "chainvet.clearFindings",
+        "title": "Clear Findings",
+        "category": "Chainvet",
+        "icon": "$(clear-all)"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "chainvet",
+          "title": "Chainvet",
+          "icon": "media/chainvet-sidebar.png"
+        }
+      ]
+    },
+    "views": {
+      "chainvet": [
+        {
+          "id": "chainvetFindings",
+          "name": "Findings"
+        }
+      ]
+    },
+    "menus": {
+      "commandPalette": [
+        { "command": "chainvet.hybridScan", "when": "resourceLangId == solidity" }
+      ],
+      "editor/title": [
+        { "command": "chainvet.hybridScan", "when": "resourceLangId == solidity", "group": "navigation" }
+      ],
+      "view/title": [
+        { "command": "chainvet.refreshFindings", "when": "view == chainvetFindings", "group": "navigation@1" },
+        { "command": "chainvet.clearFindings", "when": "view == chainvetFindings", "group": "navigation@2" }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
