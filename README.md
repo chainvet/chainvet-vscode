@@ -8,12 +8,12 @@
   Hybrid Solidity smart-contract security analysis — static, symbolic, and fuzzing — right in your editor.
 </p>
 
-<p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=chainvet.chainvet"><img src="https://img.shields.io/visual-studio-marketplace/v/chainvet.chainvet?label=VS%20Marketplace&color=7287fd" alt="VS Marketplace"></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=chainvet.chainvet"><img src="https://img.shields.io/visual-studio-marketplace/i/chainvet.chainvet?color=7287fd" alt="Installs"></a>
-  <a href="https://open-vsx.org/extension/chainvet/chainvet"><img src="https://img.shields.io/open-vsx/v/chainvet/chainvet?label=Open%20VSX&color=cba6f7" alt="Open VSX"></a>
-  <a href="https://github.com/chainvet/chainvet/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
-</p>
+<!-- <p align="center"> -->
+<!--   <a href="https://marketplace.visualstudio.com/items?itemName=chainvet.chainvet"><img src="https://img.shields.io/visual-studio-marketplace/v/chainvet.chainvet?label=VS%20Marketplace&color=7287fd" alt="VS Marketplace"></a> -->
+<!--   <a href="https://marketplace.visualstudio.com/items?itemName=chainvet.chainvet"><img src="https://img.shields.io/visual-studio-marketplace/i/chainvet.chainvet?color=7287fd" alt="Installs"></a> -->
+<!--   <a href="https://open-vsx.org/extension/chainvet/chainvet"><img src="https://img.shields.io/open-vsx/v/chainvet/chainvet?label=Open%20VSX&color=cba6f7" alt="Open VSX"></a> -->
+<!--   <a href="https://github.com/chainvet/chainvet/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a> -->
+<!-- </p> -->
 
 Chainvet analyzes Solidity contracts with three engines — **45+ static detectors**, **symbolic execution (Z3)**, and **coverage-guided fuzzing** — and surfaces the results as native diagnostics plus a dedicated Findings panel. Every finding carries a **confidence tier**: _Confirmed_ (validated by symbolic or dynamic evidence) or _Candidate_ (static heuristics only).
 
