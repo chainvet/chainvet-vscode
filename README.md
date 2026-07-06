@@ -15,7 +15,7 @@
 <!--   <a href="https://github.com/chainvet/chainvet/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a> -->
 <!-- </p> -->
 
-Chainvet analyzes Solidity contracts with three engines — **45+ static detectors**, **symbolic execution (Z3)**, and **coverage-guided fuzzing** — and surfaces the results as native diagnostics plus a dedicated Findings panel. Every finding carries a **confidence tier**: _Confirmed_ (validated by symbolic or dynamic evidence) or _Candidate_ (static heuristics only).
+Chainvet analyzes Solidity contracts with three engines — **45+ static detectors**, **symbolic execution (Z3)**, and **coverage-guided fuzzing** — and surfaces the results as native diagnostics plus a dedicated Findings panel. Every finding carries a **confidence** level — _High_, _Medium_, or _Low_ — reflecting how precise the detector that reported it is.
 
 <!-- Add a short demo GIF for the best first impression — e.g. running a hybrid scan
      and clicking through the Findings panel. Record it, drop it at media/demo.gif, and
@@ -26,9 +26,9 @@ Chainvet analyzes Solidity contracts with three engines — **45+ static detecto
 ## Features
 
 - **Live diagnostics** — static findings as you open, edit, and save `.sol` files, shown as inline squiggles and in the Problems panel.
-- **Full Hybrid Scan on demand** — run symbolic execution + fuzzing on the current file (▶ in the editor title, or the Command Palette) to surface **Confirmed** vulnerabilities the live pass can't reach.
-- **Findings panel** — a dedicated Activity Bar view grouping findings by severity, each tagged with its tier and the engine that found it; click a finding to jump to the exact location.
-- **Filter by tier** — show All, Confirmed only, or Candidate only.
+- **Full Hybrid Scan on demand** — run symbolic execution + fuzzing on the current file (▶ in the editor title, or the Command Palette) to surface vulnerabilities the live pass can't reach.
+- **Findings panel** — a dedicated Activity Bar view grouping findings by severity, each tagged with its confidence and the engine that found it; click a finding to jump to the exact location.
+- **Filter by confidence** — show All, or High / Medium / Low confidence only.
 - **Works standalone** — Chainvet registers the Solidity language itself, so diagnostics work without any other extension (pair it with a Solidity syntax extension for highlighting).
 
 ## Requirements
@@ -49,14 +49,14 @@ Or download `chainvet-lsp` from the [releases page](https://github.com/chainvet/
 1. Install `chainvet-lsp` (above) and reload VS Code.
 2. Open a `.sol` file — static findings appear as you type.
 3. Run **Chainvet: Full Hybrid Scan (Current File)** (▶ in the editor title bar) for the deep symbolic + fuzzing pass.
-4. Open the **Chainvet** view in the Activity Bar to browse findings; use the **funnel** to filter by tier.
+4. Open the **Chainvet** view in the Activity Bar to browse findings; use the **funnel** to filter by confidence.
 
 ## Commands
 
 | Command | Description |
 | --- | --- |
 | `Chainvet: Full Hybrid Scan (Current File)` | Run the full static + symbolic + fuzzing pipeline on the active file |
-| `Chainvet: Filter by Tier` | Filter the Findings view: All / Confirmed / Candidate |
+| `Chainvet: Filter by Confidence` | Filter the Findings view: All / High / Medium / Low |
 | `Chainvet: Clear Findings` | Clear the Findings view and hybrid diagnostics |
 | `Chainvet: Restart Language Server` | Restart `chainvet-lsp` (e.g. after changing settings) |
 

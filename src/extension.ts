@@ -20,8 +20,9 @@ interface LspRange {
 }
 /** A finding row from the server's `chainvet/publishFindings` notification. */
 interface FindingItem {
-  tier: string;
   provenance: string;
+  /** Raw per-detector engine confidence (`high`/`medium`/`low`); may be absent. */
+  confidence?: string;
   kind: string;
   severity: string;
   category: string;
@@ -33,7 +34,7 @@ interface PublishFindingsParams {
   findings: FindingItem[];
 }
 
-type TierFilter = "all" | "confirmed" | "candidate";
+type ConfidenceFilter = "all" | "high" | "medium" | "low";
 
 // ─── Language server ────────────────────────────────────────────────────────
 
@@ -114,7 +115,7 @@ class FindingsProvider implements vscode.TreeDataProvider<TreeNode> {
   private readonly emitter = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this.emitter.event;
   private readonly byUri = new Map<string, FindingItem[]>();
-  private filter: TierFilter = "all";
+  private filter: ConfidenceFilter = "all";
 
   setForUri(uri: string, findings: FindingItem[]): void {
     if (findings.length > 0) {
@@ -130,7 +131,7 @@ class FindingsProvider implements vscode.TreeDataProvider<TreeNode> {
     this.emitter.fire();
   }
 
-  setFilter(filter: TierFilter): void {
+  setFilter(filter: ConfidenceFilter): void {
     this.filter = filter;
     this.emitter.fire();
   }
@@ -139,7 +140,7 @@ class FindingsProvider implements vscode.TreeDataProvider<TreeNode> {
     const out: { uri: string; finding: FindingItem }[] = [];
     for (const [uri, findings] of this.byUri) {
       for (const finding of findings) {
-        if (this.filter === "all" || finding.tier === this.filter) {
+        if (this.filter === "all" || (finding.confidence ?? "low") === this.filter) {
           out.push({ uri, finding });
         }
       }
@@ -170,14 +171,15 @@ class FindingsProvider implements vscode.TreeDataProvider<TreeNode> {
       return item;
     }
     const f = node.finding;
+    const confidence = f.confidence ?? "unknown";
     const item = new vscode.TreeItem(f.kind, vscode.TreeItemCollapsibleState.None);
-    item.description = `${f.tier} · ${f.message}`;
+    item.description = `${confidence} conf. · ${f.message}`;
     item.tooltip = new vscode.MarkdownString(
-      `**${f.severity.toUpperCase()}** · ${f.tier} _(${f.provenance})_\n\n` +
+      `**${f.severity.toUpperCase()}** · ${confidence} confidence _(${f.provenance})_\n\n` +
         `${f.category} — \`${f.kind}\`\n\n${f.message}`,
     );
     item.iconPath = new vscode.ThemeIcon(
-      f.tier === "confirmed" ? "pass-filled" : "circle-outline",
+      f.confidence === "high" ? "pass-filled" : "circle-outline",
       severityColor(f.severity),
     );
     item.command = {
@@ -235,20 +237,22 @@ async function runHybridScan(): Promise<void> {
   );
 }
 
-async function chooseTierFilter(treeView: vscode.TreeView<TreeNode>): Promise<void> {
-  const picks: { label: string; value: TierFilter }[] = [
+async function chooseConfidenceFilter(treeView: vscode.TreeView<TreeNode>): Promise<void> {
+  const picks: { label: string; value: ConfidenceFilter }[] = [
     { label: "$(list-flat) All findings", value: "all" },
-    { label: "$(pass-filled) Confirmed only", value: "confirmed" },
-    { label: "$(circle-outline) Candidate only", value: "candidate" },
+    { label: "$(pass-filled) High confidence only", value: "high" },
+    { label: "$(circle-outline) Medium confidence only", value: "medium" },
+    { label: "$(circle-outline) Low confidence only", value: "low" },
   ];
   const pick = await vscode.window.showQuickPick(picks, {
-    placeHolder: "Filter Chainvet findings by tier",
+    placeHolder: "Filter Chainvet findings by confidence",
   });
   if (!pick) {
     return;
   }
   findingsProvider.setFilter(pick.value);
-  treeView.description = pick.value === "all" ? undefined : `${capitalize(pick.value)} only`;
+  treeView.description =
+    pick.value === "all" ? undefined : `${capitalize(pick.value)} confidence only`;
 }
 
 // ─── Activation ─────────────────────────────────────────────────────────────
@@ -277,7 +281,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       vscode.window.showInformationMessage("Chainvet language server restarted.");
     }),
     vscode.commands.registerCommand("chainvet.runHybridScan", () => runHybridScan()),
-    vscode.commands.registerCommand("chainvet.filterTier", () => chooseTierFilter(treeView)),
+    vscode.commands.registerCommand("chainvet.filterConfidence", () =>
+      chooseConfidenceFilter(treeView),
+    ),
     vscode.commands.registerCommand("chainvet.clearFindings", () => findingsProvider.clear()),
     vscode.commands.registerCommand("chainvet.openFinding", (node: FindingLeaf) => openFinding(node)),
   );

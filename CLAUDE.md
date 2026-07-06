@@ -27,7 +27,7 @@ Requires `chainvet-lsp` on PATH (or set the `chainvet.serverPath` setting).
   (`vscode-languageclient`), builds the `chainvetFindings` tree (`FindingsProvider`),
   and registers commands. Compiled to `out/extension.js` (the manifest's `main`).
 - `package.json` — manifest: settings, the `chainvet` activity-bar view, and commands
-  (`runHybridScan`, `filterTier`, `clearFindings`, `restartServer`).
+  (`runHybridScan`, `filterConfidence`, `clearFindings`, `restartServer`).
 - `media/` — icons + banner.
 
 ## How it consumes chainvet-lsp
@@ -36,8 +36,8 @@ Requires `chainvet-lsp` on PATH (or set the `chainvet.serverPath` setting).
   →`CHAINVET_AI_REPORT`, `aiFallbackParser.enabled`→`CHAINVET_AI_FALLBACK_PARSER`,
   `ai.endpoint`→`CHAINVET_AI_ENDPOINT`, `ai.model`→`CHAINVET_AI_MODEL`.
 - The Findings tree is fed by the LSP **`chainvet/publishFindings`** notification
-  (structured rows: tier/provenance/severity/kind/category/message/range); `runHybridScan`
-  triggers the `chainvet.hybridScan` LSP command. Tier filter: all / confirmed / candidate.
+  (structured rows: provenance/confidence/severity/kind/category/message/range); `runHybridScan`
+  triggers the `chainvet.hybridScan` LSP command. Confidence filter: all / high / medium / low.
 
 ## Conventions
 
