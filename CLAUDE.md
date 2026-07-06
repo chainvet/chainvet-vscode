@@ -33,8 +33,8 @@ Requires `chainvet-lsp` on PATH (or set the `chainvet.serverPath` setting).
 ## How it consumes chainvet-lsp
 
 - **Settings → env** for the spawned server (`buildEnv`): `chainvet.aiReports.enabled`
-  →`CHAINVET_AI_REPORT`, `aiFallbackParser.enabled`→`CHAINVET_AI_FALLBACK_PARSER`,
-  `ai.endpoint`→`CHAINVET_AI_ENDPOINT`, `ai.model`→`CHAINVET_AI_MODEL`.
+  →`CHAINVET_LLM_REPORT`, `aiFallbackParser.enabled`→`CHAINVET_LLM_FALLBACK_PARSER`,
+  `ai.endpoint`→`CHAINVET_LLM_ENDPOINT`, `ai.model`→`CHAINVET_LLM_MODEL`.
 - The Findings tree is fed by the LSP **`chainvet/publishFindings`** notification
   (structured rows: provenance/confidence/severity/kind/category/message/range); `runHybridScan`
   triggers the `chainvet.hybridScan` LSP command. Confidence filter: all / high / medium / low.

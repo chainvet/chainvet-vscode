@@ -43,18 +43,18 @@ function buildEnv(): NodeJS.ProcessEnv {
   const config = vscode.workspace.getConfiguration("chainvet");
   const env: NodeJS.ProcessEnv = { ...process.env };
   if (config.get<boolean>("aiReports.enabled")) {
-    env.CHAINVET_AI_REPORT = "1";
+    env.CHAINVET_LLM_REPORT = "1";
   }
   if (config.get<boolean>("aiFallbackParser.enabled")) {
-    env.CHAINVET_AI_FALLBACK_PARSER = "1";
+    env.CHAINVET_LLM_FALLBACK_PARSER = "1";
   }
   const endpoint = config.get<string>("ai.endpoint");
   if (endpoint) {
-    env.CHAINVET_AI_ENDPOINT = endpoint;
+    env.CHAINVET_LLM_ENDPOINT = endpoint;
   }
   const model = config.get<string>("ai.model");
   if (model) {
-    env.CHAINVET_AI_MODEL = model;
+    env.CHAINVET_LLM_MODEL = model;
   }
   return env;
 }
